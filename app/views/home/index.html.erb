@@ -1,0 +1,121 @@
+<script>
+function dismiss(uid, list) {
+	sendAjax({uid: uid, list: list}, '/followers/dismiss');
+}
+
+function follow(uid, list) {
+	sendAjax({uid: uid, list: list}, '/followers/follow');
+}
+
+function sayhi(handle, list) {
+	sendAjax({handle: handle, list: list}, '/followers/sayhi');
+}
+
+function sendAjax(data, url) {
+	$.ajax({
+	    url: url,
+	    type: 'POST',
+		data: JSON.stringify(data),
+		contentType: "application/json",
+		success: function(returned_data) {
+			updateList(returned_data, data['list']);
+			return false;
+		},
+	    error: function(err) { 
+	    	alert("error");
+	    }
+	});
+}
+
+function updateList(data, list) {
+	fllowing_str = "";
+	if (list == 'followers')
+		fllowing_str = "Following you";
+	else
+		fllowing_str = "Not following you";
+
+	$("#" + list).empty();
+	for (var i = 0; i < data.length; i++) {
+		$("#" + list).append(
+			'<li class="list-group-item"> ' +
+				'<div class="media-left media-middle"> ' +
+				'<img class="media-object" src="' + data[i].picture + '" />' +
+			  '</div>' +
+			  '<div class="media-body">' +
+				'<b>' + data[i].name + '</b>' +
+				'<i> @' + data[i].handle + '</i>' +
+				'<br />' +
+				fllowing_str +
+				'<br />' +
+				data[i].followers_count + ' Followers' +
+				'<br />' +
+				// change to condirion
+				'<a href="#" onclick="follow(' + data[i].uid + ', \'' + list + '\')">Follow</a> | ' +
+				'<a href="#" onclick="sayhi(\'' + data[i].handle + '\', \'' + list + '\')">Say hi</a> | ' +
+				'<a href="#" onclick="dismiss(' + data[i].uid + ', \'' + list + '\')">Dismiss</a> | ' +
+			'</div>' +
+			'</li>'
+			)
+	}
+}
+</script>
+<div class="container theme-showcase">
+	<% if current_user %>
+		<p> Hello <%= current_user.name %>! </p>
+		<a href="/auth/signout">Sign out</a>
+	<div class="list-group">
+	  <div class="list-group-item active">
+	    <h4 class="list-group-item-heading">New Followers</h4>
+	  </div>
+	</div>
+	<ul class="list-group" id="followers">
+		<% @new_followers.each do |follower| %>
+		<li class="list-group-item">
+			<div class="media-left media-middle">
+				<img class="media-object" src="<%= follower.picture %>" />
+			</div>
+			<div class="media-body">
+				<b><%= follower[:name] %></b>
+				<i> @<%= follower[:handle] %></i>
+				<br />
+				Following you
+				<br />
+				<%= follower[:followers_count] %> Followers
+				<br />
+				<a href="#" onclick="follow(<%= follower.uid %>, 'followers')">Follow</a> |
+				<a href="#" onclick="sayhi('<%= follower.handle %>', 'followers')">Say Hi</a> |
+				<a href="#" onclick="dismiss(<%= follower.uid %>, 'followers')">Dismiss</a>
+			</div>
+		</li>
+		<% end %>
+	</ul>
+	<div class="list-group">
+	  <div class="list-group-item active">
+	    <h4 class="list-group-item-heading">New Unfollowers</h4>
+	  </div>
+	</div>
+	<ul class="list-group" id="unfollowers">
+		<% @new_unfollowers.each do |unfollower| %>
+		<li class="list-group-item">
+			<div class="media-left media-middle">
+				<img class="media-object" src="<%= unfollower.picture %>" />
+			</div>
+			<div class="media-body">
+				<b><%= unfollower[:name] %></b>
+				<i> @<%= unfollower[:handle] %></i>
+				<br />
+				Not following you
+				<br />
+				<%= unfollower[:followers_count] %> Followers
+				<br />
+				<a href="#" onclick="follow(<%= unfollower.uid %>, 'unfollowers')">Follow</a> |
+				<a href="#" onclick="sayhi('<%= unfollower.handle %>', 'unfollowers')">Say Hi</a> |
+				<a href="#" onclick="dismiss(<%= unfollower.uid %>, 'unfollowers')">Dismiss</a>
+			</div>
+		</li>
+		<% end %>
+	</ul>
+<% else %>
+	<a href="/auth/twitter/">Please sign in</a>
+<% end %>
+</div>
